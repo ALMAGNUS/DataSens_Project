@@ -11,30 +11,30 @@ from typing import List, Dict
 
 class ViePubliqueCollector:
     """Collecte d'actualités depuis vie-publique.fr"""
-    
+
     def __init__(self):
         self.rss_url = "https://www.vie-publique.fr/rss.xml"
         self.base_url = "https://www.vie-publique.fr"
-    
+
     def collect(self, limit: int = 100) -> List[Dict]:
         """
         Collecte les actualités récentes via RSS
-        
+
         Args:
             limit: Nombre d'articles à récupérer
-            
+
         Returns:
             Liste de dictionnaires contenant les articles
         """
         documents = []
-        
+
         try:
             feed = feedparser.parse(self.rss_url)
-            
+
             for entry in feed.entries[:limit]:
                 # Enrichissement avec scraping de la page complète
                 texte_complet = self._scrape_article(entry.link)
-                
+
                 doc = {
                     "id_externe": f"vie_publique_{entry.id}",
                     "titre": entry.title,
@@ -46,19 +46,19 @@ class ViePubliqueCollector:
                     "type_donnee": "Web Scraping"
                 }
                 documents.append(doc)
-                
+
         except Exception as e:
             print(f"❌ Erreur Vie Publique RSS: {e}")
-        
+
         return documents
-    
+
     def _scrape_article(self, url: str) -> str:
         """Scrape le contenu complet d'un article"""
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
-            
+
             # Trouver le contenu principal (adapter selon structure réelle)
             content = soup.find('div', class_='content-article')
             if content:

@@ -13,34 +13,34 @@ load_dotenv()
 
 class RedditCollector:
     """Collecte de posts Reddit depuis des subreddits français"""
-    
+
     def __init__(self):
         self.reddit = praw.Reddit(
             client_id=os.getenv("REDDIT_CLIENT_ID"),
             client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
             user_agent="DataSens/1.0"
         )
-    
+
     def collect(self, subreddits: List[str] = None, limit: int = 100) -> List[Dict]:
         """
         Collecte les posts récents depuis les subreddits spécifiés
-        
+
         Args:
             subreddits: Liste des subreddits (défaut: france, Paris, Lyon)
             limit: Nombre de posts par subreddit
-            
+
         Returns:
             Liste de dictionnaires contenant les posts
         """
         if subreddits is None:
             subreddits = ["france", "Paris", "Lyon"]
-        
+
         documents = []
-        
+
         for sub_name in subreddits:
             try:
                 subreddit = self.reddit.subreddit(sub_name)
-                
+
                 for post in subreddit.hot(limit=limit):
                     doc = {
                         "id_externe": f"reddit_{post.id}",
@@ -56,10 +56,10 @@ class RedditCollector:
                         "type_donnee": "Web Scraping"
                     }
                     documents.append(doc)
-                    
+
             except Exception as e:
                 print(f"❌ Erreur Reddit r/{sub_name}: {e}")
-        
+
         return documents
 
 

@@ -75,10 +75,31 @@ cd datasens-project
 ```
 
 ### 2️⃣ Configuration
+
+**Créer le fichier `.env`** avec tes API keys :
+
 ```bash
-# Le fichier .env est déjà configuré avec les valeurs par défaut
-# Éditer les API keys si nécessaire : OWM_API_KEY, YOUTUBE_API_KEY, etc.
+# PostgreSQL
+POSTGRES_USER=ds_user
+POSTGRES_PASSWORD=ds_pass
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=datasens
+
+# MinIO
+MINIO_ROOT_USER=admin
+MINIO_ROOT_PASSWORD=admin123
+MINIO_ENDPOINT=localhost:9000
+
+# API Keys (optionnel pour démo)
+REDDIT_CLIENT_ID=ton_client_id
+REDDIT_CLIENT_SECRET=ton_secret
+YOUTUBE_API_KEY=ta_cle_youtube
+NEWSAPI_KEY=ta_cle_newsapi
+OWM_API_KEY=ta_cle_openweather
 ```
+
+**Note** : Les collecteurs fonctionnent sans clés API (mode démo avec données factices)
 
 ### 3️⃣ Lancer l'infrastructure
 ```bash
@@ -111,6 +132,61 @@ Exécuter les cellules dans l'ordre (1-27)
 
 ---
 
+## 🤖 Collecteurs de données (9 implémentés)
+
+Tous les collecteurs sont dans `datasens/collectors/` et peuvent être utilisés indépendamment :
+
+```python
+# Exemple : Collecter depuis Reddit
+from datasens.collectors.reddit_collector import RedditCollector
+
+collector = RedditCollector()
+posts = collector.collect(subreddits=["france"], limit=50)
+print(f"✅ {len(posts)} posts collectés")
+```
+
+### Web Scraping (6 sources)
+
+1. **`reddit_collector.py`** - Posts Reddit (API PRAW)
+   - Subreddits : r/france, r/Paris, r/Lyon
+   - Données : titre, texte, score, commentaires
+
+2. **`youtube_collector.py`** - Vidéos YouTube (Google API)
+   - Chaînes officielles françaises
+   - Données : titre, description, date publication
+
+3. **`signalconso_collector.py`** - Signalements citoyens (API)
+   - Source : signal.conso.gouv.fr
+   - Données : catégorie, entreprise, statut
+
+4. **`trustpilot_collector.py`** - Avis consommateurs (scraping éthique)
+   - Entreprises : SNCF, EDF, Orange
+   - Données : note, titre, texte avis
+
+5. **`vie_publique_collector.py`** - Actualités gouvernementales (RSS)
+   - Source : vie-publique.fr
+   - Données : titre, contenu, catégorie
+
+6. **`datagouv_collector.py`** - Métadonnées datasets (API)
+   - Source : data.gouv.fr
+   - Données : titre, description, organisation
+
+### API (3 sources)
+
+7. **`openweather_collector.py`** - Données météo (API)
+   - Villes : Paris, Lyon, Marseille, Toulouse, Nice
+   - Données : température, humidité, vent
+
+8. **`newsapi_collector.py`** - Actualités internationales (API)
+   - Sources : multiples
+   - Données : titre, description, source, date
+
+9. **`rss_collector.py`** - Flux RSS multi-sources (Feedparser)
+   - Sources : Le Monde, BBC, France24, RFI, Franceinfo, 20 Minutes
+   - Données : titre, résumé, lien, date
+
+---
+
 ## 📁 Structure du projet
 
 ```
@@ -128,24 +204,34 @@ datasens-project/
 ├── 📂 data/                         # Données collectées
 │   ├── raw/                         # Bruts (Kaggle, RSS, GDELT...)
 │   │   ├── kaggle/                  # 60k tweets
-│   │   ├── api/owm/                 # Météo 4 villes
-│   │   ├── api/newsapi/             # 200 articles
-│   │   ├── rss/                     # 77 articles multi-sources
-│   │   ├── scraping/multi/          # Web scraping consolidé
-│   │   ├── scraping/viepublique/    # Consultations citoyennes
-│   │   ├── scraping/datagouv/       # Budget participatif
+│   │   ├── reddit/                  # Posts r/france
+│   │   ├── youtube/                 # Vidéos chaînes FR
+│   │   ├── signalconso/             # Signalements citoyens
+│   │   ├── trustpilot/              # Avis consommateurs
+│   │   ├── viepublique/             # Actualités gouv
+│   │   ├── datagouv/                # Métadonnées datasets
+│   │   ├── openweather/             # Données météo
+│   │   ├── newsapi/                 # Articles actualités
+│   │   ├── rss/                     # Flux RSS multi-sources
 │   │   ├── gdelt/                   # Big Data GKG France
 │   │   └── manifests/               # Traçabilité
 │   ├── silver/                      # Nettoyés (E2)
 │   └── gold/                        # Agrégés (E2)
 │
-├── 📂 docs/                         # Documentation
-│   ├── README.md                    # Cette documentation
-│   ├── DEPLOIEMENT_GITHUB.md        # Guide CI/CD
-│   ├── REDDIT_API_SETUP.md          # Config Reddit API
-│   └── WEB_SCRAPING_GUIDE.md        # Éthique scraping
-│
-├── 📂 datasens/                     # Métadonnées
+├── 📂 datasens/                     # Code source
+│   ├── collectors/                  # 🆕 9 collecteurs implémentés
+│   │   ├── reddit_collector.py      # Reddit API (PRAW)
+│   │   ├── youtube_collector.py     # YouTube Data API v3
+│   │   ├── signalconso_collector.py # SignalConso API
+│   │   ├── trustpilot_collector.py  # Trustpilot scraping
+│   │   ├── vie_publique_collector.py# Vie Publique RSS+scraping
+│   │   ├── datagouv_collector.py    # Data.gouv.fr API
+│   │   ├── openweather_collector.py # OpenWeatherMap API
+│   │   ├── newsapi_collector.py     # NewsAPI
+│   │   └── rss_collector.py         # RSS multi-sources
+│   ├── transformers/                # Nettoyage & enrichissement
+│   ├── loaders/                     # PostgreSQL & MinIO
+│   ├── utils/                       # Helpers
 │   └── versions/                    # Snapshots PostgreSQL
 │
 ├── 📂 logs/                         # Logs de collecte
@@ -200,19 +286,27 @@ DOCUMENT (id, id_flux, titre, texte, langue, hash_fingerprint)
 - **Tables** : document, flux, territoire (Merise)
 
 #### 3️⃣ WEB SCRAPING (6 sources citoyennes légales)
-- **Reddit France** (API PRAW) : ~150 posts
-- **YouTube Comments** (API) : ~300 commentaires texte
-- **SignalConso** (Open Data gouv.fr) : ~500 signalements
-- **Trustpilot FR** : ~100 avis
-- **Vie-publique.fr** : ~50 consultations citoyennes
-- **data.gouv.fr** : ~100 Budget Participatif
-- **Total** : ~1,200 documents
 
-#### 4️⃣ API (3 APIs officielles)
-- **OpenWeatherMap** : 4 relevés météo (Paris, Lyon, Marseille, Lille)
-- **NewsAPI** : ~200 articles (4 catégories FR)
-- **RSS Multi-sources** : ~77 articles (Franceinfo + 20 Minutes + Le Monde)
-- **Total** : ~280 documents
+| Source | Collecteur | Tech | Description |
+|--------|-----------|------|-------------|
+| **Reddit France** | `reddit_collector.py` | PRAW API | r/france, r/Paris, r/Lyon |
+| **YouTube** | `youtube_collector.py` | Google API | Chaînes officielles FR |
+| **SignalConso** | `signalconso_collector.py` | Requests API | Signalements citoyens |
+| **Trustpilot** | `trustpilot_collector.py` | BeautifulSoup4 | Avis consommateurs FR |
+| **Vie Publique** | `vie_publique_collector.py` | Feedparser + BS4 | Actualités gouv |
+| **Data.gouv.fr** | `datagouv_collector.py` | Requests API | Métadonnées datasets |
+
+**Total estimé** : ~1,200 documents/jour
+
+#### 4️⃣ API (3 sources officielles)
+
+| Source | Collecteur | Tech | Description |
+|--------|-----------|------|-------------|
+| **OpenWeatherMap** | `openweather_collector.py` | REST API | Météo 5 villes FR |
+| **NewsAPI** | `newsapi_collector.py` | REST API | Actualités internationales |
+| **RSS Multi-sources** | `rss_collector.py` | Feedparser | Le Monde, BBC, France24, RFI |
+
+**Total estimé** : ~300 articles/jour
 
 #### 5️⃣ BIG DATA (GDELT GKG France)
 - **Volume brut** : ~300 MB (fichier GKG dernières 24h)

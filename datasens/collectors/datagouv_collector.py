@@ -9,23 +9,23 @@ from typing import List, Dict
 
 class DataGouvCollector:
     """Collecte de métadonnées de datasets depuis data.gouv.fr"""
-    
+
     def __init__(self):
         self.api_url = "https://www.data.gouv.fr/api/1"
-    
+
     def collect(self, query: str = "france", page_size: int = 100) -> List[Dict]:
         """
         Collecte les datasets récents
-        
+
         Args:
             query: Mot-clé de recherche
             page_size: Nombre de résultats
-            
+
         Returns:
             Liste de dictionnaires contenant les métadonnées des datasets
         """
         documents = []
-        
+
         try:
             url = f"{self.api_url}/datasets/"
             params = {
@@ -33,11 +33,11 @@ class DataGouvCollector:
                 "page_size": page_size,
                 "sort": "-created"
             }
-            
+
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
-            
+
             for dataset in data.get('data', []):
                 doc = {
                     "id_externe": f"datagouv_{dataset.get('id')}",
@@ -53,10 +53,10 @@ class DataGouvCollector:
                     "type_donnee": "Web Scraping"
                 }
                 documents.append(doc)
-                
+
         except Exception as e:
             print(f"❌ Erreur Data.gouv.fr: {e}")
-        
+
         return documents
 
 

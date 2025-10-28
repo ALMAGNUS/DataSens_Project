@@ -9,7 +9,7 @@ from typing import List, Dict
 
 class RSSCollector:
     """Collecte d'articles depuis plusieurs flux RSS"""
-    
+
     # Flux RSS français et internationaux
     RSS_FEEDS = {
         "Le Monde": "https://www.lemonde.fr/rss/une.xml",
@@ -19,27 +19,27 @@ class RSSCollector:
         "France 24": "https://www.france24.com/fr/rss",
         "RFI": "https://www.rfi.fr/fr/rss"
     }
-    
+
     def collect(self, feeds: Dict[str, str] = None, limit_per_feed: int = 50) -> List[Dict]:
         """
         Collecte les articles depuis les flux RSS
-        
+
         Args:
             feeds: Dictionnaire {nom_source: url_rss} (utilise RSS_FEEDS par défaut)
             limit_per_feed: Nombre d'articles par flux
-            
+
         Returns:
             Liste de dictionnaires contenant les articles
         """
         if feeds is None:
             feeds = self.RSS_FEEDS
-        
+
         documents = []
-        
+
         for source_name, rss_url in feeds.items():
             try:
                 feed = feedparser.parse(rss_url)
-                
+
                 for entry in feed.entries[:limit_per_feed]:
                     # Parser la date de publication
                     if hasattr(entry, 'published_parsed') and entry.published_parsed:
@@ -48,7 +48,7 @@ class RSSCollector:
                         date_pub = datetime(*entry.updated_parsed[:6])
                     else:
                         date_pub = datetime.now()
-                    
+
                     doc = {
                         "id_externe": f"rss_{source_name.lower().replace(' ', '_')}_{entry.get('id', len(documents))}",
                         "titre": entry.get('title', 'Sans titre'),
@@ -61,12 +61,12 @@ class RSSCollector:
                         "type_donnee": "API"
                     }
                     documents.append(doc)
-                    
+
                 print(f"✅ {source_name}: {len(feed.entries[:limit_per_feed])} articles collectés")
-                
+
             except Exception as e:
                 print(f"❌ Erreur RSS {source_name}: {e}")
-        
+
         return documents
 
 

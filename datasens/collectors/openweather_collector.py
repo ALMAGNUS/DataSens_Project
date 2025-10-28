@@ -13,26 +13,26 @@ load_dotenv()
 
 class OpenWeatherCollector:
     """Collecte de données météo depuis OpenWeatherMap"""
-    
+
     def __init__(self):
         self.api_key = os.getenv("OWM_API_KEY")
         self.base_url = "https://api.openweathermap.org/data/2.5"
-    
+
     def collect(self, cities: List[str] = None) -> List[Dict]:
         """
         Collecte les données météo pour des villes françaises
-        
+
         Args:
             cities: Liste de villes (défaut: Paris, Lyon, Marseille)
-            
+
         Returns:
             Liste de dictionnaires contenant les données météo
         """
         if cities is None:
             cities = ["Paris,FR", "Lyon,FR", "Marseille,FR", "Toulouse,FR", "Nice,FR"]
-        
+
         documents = []
-        
+
         for city in cities:
             try:
                 url = f"{self.base_url}/weather"
@@ -42,11 +42,11 @@ class OpenWeatherCollector:
                     "units": "metric",
                     "lang": "fr"
                 }
-                
+
                 response = requests.get(url, params=params, timeout=30)
                 response.raise_for_status()
                 data = response.json()
-                
+
                 doc = {
                     "id_externe": f"owm_{data['id']}_{int(datetime.now().timestamp())}",
                     "titre": f"Météo {data['name']}",
@@ -64,10 +64,10 @@ class OpenWeatherCollector:
                     "type_donnee": "API"
                 }
                 documents.append(doc)
-                
+
             except Exception as e:
                 print(f"❌ Erreur OpenWeatherMap {city}: {e}")
-        
+
         return documents
 
 
