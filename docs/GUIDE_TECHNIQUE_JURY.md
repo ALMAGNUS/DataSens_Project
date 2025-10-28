@@ -69,6 +69,150 @@ print(f"✅ Reddit: {len(all_data)} posts")  # Log direct
 
 ---
 
+## 📋 Système de Logging & Debugging
+
+**Pourquoi on a ajouté un système de logging détaillé ?**
+
+Le jury (et nous-mêmes) a besoin de **tracer** ce qui se passe pendant la collecte :
+- ✅ Quelles sources **fonctionnent** ?
+- ✅ Quelles sources **échouent** et **pourquoi** ?
+- ✅ Combien de **documents collectés** par source ?
+- ✅ **Horodatage précis** de chaque opération
+- ✅ **Traceback complet** des erreurs pour debugging
+
+### Architecture du logging (Cellule 8)
+
+```python
+import logging
+import traceback
+
+# Configuration des fichiers de logs
+LOGS_DIR = ROOT.parent / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
+
+timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+log_file = LOGS_DIR / f"collecte_{timestamp}.log"
+error_file = LOGS_DIR / f"errors_{timestamp}.log"
+
+# Logger principal
+logger = logging.getLogger("DataSens")
+logger.setLevel(logging.DEBUG)
+
+# Handler 1 : Fichier complet (toutes les opérations)
+file_handler = logging.FileHandler(log_file, encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+))
+
+# Handler 2 : Fichier erreurs uniquement
+error_handler = logging.FileHandler(error_file, encoding='utf-8')
+error_handler.setLevel(logging.ERROR)
+error_handler.setFormatter(logging.Formatter(
+    '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+))
+
+# Handler 3 : Console (notebook output)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(message)s'))
+
+logger.addHandler(file_handler)
+logger.addHandler(error_handler)
+logger.addHandler(console_handler)
+
+# Fonction helper pour logger les erreurs avec traceback
+def log_error(source: str, error: Exception, context: str = ""):
+    """Log une erreur avec traceback complet"""
+    logger.error(f"[{source}] {context}: {str(error)}")
+    logger.error(f"Traceback:\n{traceback.format_exc()}")
+```
+
+### Intégration dans le code de collecte
+
+**Avant (avec print)** :
+```python
+print("🟧 Source 1/6 : Reddit France")
+try:
+    # ... collecte ...
+    print(f"✅ Reddit: {len(posts)} posts")
+except Exception as e:
+    print(f"⚠️ Reddit: {str(e)[:100]}")
+```
+
+**Maintenant (avec logger)** :
+```python
+logger.info("🟧 Source 1/6 : Reddit France")
+try:
+    # ... collecte ...
+    logger.info(f"✅ Reddit: {len(posts)} posts")
+except Exception as e:
+    log_error("Reddit", e, "Collecte subreddits r/france et r/Paris")
+    logger.warning(f"⚠️ Reddit: {str(e)[:100]} (skip)")
+```
+
+### Fichiers générés
+
+**📄 `logs/collecte_YYYYMMDD_HHMMSS.log`** - Log complet :
+```
+2025-10-28 21:06:15 | INFO     | DataSens | 🚀 Démarrage collecte Web Scraping
+2025-10-28 21:06:16 | INFO     | DataSens | 🟧 Source 1/6 : Reddit France (API PRAW)
+2025-10-28 21:06:18 | INFO     | DataSens | ✅ Reddit: 100 posts collectés
+2025-10-28 21:06:19 | INFO     | DataSens | 🎥 Source 2/6 : YouTube (API Google)
+2025-10-28 21:06:21 | INFO     | DataSens | ✅ YouTube: 30 vidéos collectées
+2025-10-28 21:06:22 | WARNING  | DataSens | ⚠️ SignalConso: 404 Client Error (skip)
+2025-10-28 21:06:30 | INFO     | DataSens | ✅ data.gouv.fr: 7 datasets collectés
+2025-10-28 21:06:35 | INFO     | DataSens | 📊 TOTAL: 86 documents collectés
+```
+
+**❌ `logs/errors_YYYYMMDD_HHMMSS.log`** - Erreurs uniquement avec traceback :
+```
+2025-10-28 21:06:22 | ERROR    | DataSens | [SignalConso] Collecte échouée: 404 Client Error
+2025-10-28 21:06:22 | ERROR    | DataSens | Traceback:
+Traceback (most recent call last):
+  File "<cell>", line 125, in <module>
+    response.raise_for_status()
+requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://signal.conso.gouv.fr/api/reports
+```
+
+### Avantages pour le jury
+
+| Aspect | Sans logging | Avec logging |
+|--------|--------------|--------------|
+| **Traçabilité** | ❌ Print() dans console uniquement | ✅ Fichiers persistants avec timestamps |
+| **Debugging** | ❌ "Erreur inconnue" | ✅ Traceback complet dans `errors_*.log` |
+| **Audit** | ❌ Impossible de retracer après exécution | ✅ Historique complet dans `logs/` |
+| **Production** | ❌ Pas scalable | ✅ Prêt pour monitoring industriel |
+| **Pédagogie** | ❌ Jury voit juste le résultat final | ✅ Jury peut suivre **chaque étape** |
+
+### Comment consulter les logs (PowerShell)
+
+```powershell
+# Afficher le dernier log de collecte
+Get-Content logs\collecte_*.log -Tail 50
+
+# Afficher les erreurs uniquement
+Get-Content logs\errors_*.log
+
+# Suivre en temps réel (pendant exécution notebook)
+Get-Content logs\collecte_*.log -Wait -Tail 20
+
+# Chercher une source spécifique
+Select-String -Path logs\collecte_*.log -Pattern "Reddit"
+```
+
+### Valeur ajoutée pour E1
+
+- ✅ Démontre **best practices industrielles** (logging production-ready)
+- ✅ Permet **debugging rapide** si une source échoue
+- ✅ Fournit **métriques détaillées** par source
+- ✅ Facilite **l'audit** du jury (tout est tracé)
+- ✅ Prouve qu'on sait gérer **les erreurs proprement** (pas de crash brutal)
+
+---
+
 ### Stack d'ingestion (ce qu'on peut ingérer)
 
 #### 📁 Type 1 : Fichier Plat
@@ -287,9 +431,11 @@ df_scraping = pd.DataFrame(all_scraping_data)
 ✅ On fait de l'IA basique (annotation auto)
 ✅ On visualise les métriques (matplotlib/seaborn)
 ✅ Le code est clean, commenté, reproductible
-✅ **[NOUVEAU]** Code inline dans notebook (9 sources, gestion erreurs robuste)
+✅ **[INLINE]** Code inline dans notebook (9 sources, pas de .py externes)
+✅ **[LOGGING]** Système de logging production-ready (fichiers + traceback)
+✅ **[ROBUSTESSE]** Gestion d'erreurs par source (try/except + fallback gracieux)
 
-**En gros** : DataSens = plateforme d'agrégation multi-sources pour créer des datasets annotés. Ce notebook démontre qu'on sait coder un pipeline ETL + CRUD propre, sans over-engineering.
+**En gros** : DataSens = plateforme d'agrégation multi-sources pour créer des datasets annotés. Ce notebook démontre qu'on sait coder un pipeline ETL + CRUD propre, avec logging industriel, sans over-engineering.
 
 ---
 

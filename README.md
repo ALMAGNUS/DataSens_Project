@@ -141,13 +141,74 @@ jupyter notebook datasens_E1_v2.ipynb
 **🎯 Mode d'emploi** : Exécuter les cellules dans l'ordre (1-61). Chaque cellule est commentée et autonome.
 
 **⚡ Cellules clés** :
+- **Cellule 8** : Configuration logging (fichiers de debug)
 - **Cellule 25** : Web Scraping 6 sources (code inline simple)
 - **Cellule 26** : APIs 3 sources (code inline simple)
 - **Cellule 27** : GDELT Big Data France
 
 ---
 
-## 🔍 Approche Code Inline (Simple & Pédagogique)
+## 📋 Logs & Debugging
+
+Le notebook génère des **fichiers de logs détaillés** pour tracer toutes les collectes et déboguer les erreurs :
+
+### Fichiers générés (dossier `logs/`)
+
+**📄 `collecte_YYYYMMDD_HHMMSS.log`** - Log complet de la collecte :
+```
+2025-10-28 21:06:15 | INFO     | DataSens | 🚀 Démarrage collecte Web Scraping Multi-Sources
+2025-10-28 21:06:16 | INFO     | DataSens | [Reddit] Connexion API PRAW réussie
+2025-10-28 21:06:18 | INFO     | DataSens | [Reddit] r/france: 50 posts collectés
+2025-10-28 21:06:19 | INFO     | DataSens | [Reddit] r/Paris: 50 posts collectés
+2025-10-28 21:06:20 | INFO     | DataSens | [Reddit] ✅ Total: 100 posts
+2025-10-28 21:06:21 | INFO     | DataSens | [YouTube] Connexion API Google v3 réussie
+2025-10-28 21:06:23 | INFO     | DataSens | [YouTube] ✅ 30 vidéos collectées
+2025-10-28 21:06:24 | WARNING  | DataSens | [SignalConso] 404 Client Error - API endpoint modifié
+2025-10-28 21:06:24 | INFO     | DataSens | [SignalConso] ⚠️ 0 signalements (skip)
+2025-10-28 21:06:30 | INFO     | DataSens | [DataGouv] ✅ 7 datasets collectés
+2025-10-28 21:06:35 | INFO     | DataSens | 📊 TOTAL: 86 documents collectés
+2025-10-28 21:06:36 | INFO     | DataSens | ✅ Storage PostgreSQL + MinIO réussi
+```
+
+**❌ `errors_YYYYMMDD_HHMMSS.log`** - Erreurs uniquement avec traceback :
+```
+2025-10-28 21:06:24 | ERROR    | DataSens | [SignalConso] Collecte échouée: 404 Client Error: Not Found for url: https://signal.conso.gouv.fr/api/reports
+2025-10-28 21:06:24 | ERROR    | DataSens | Traceback:
+Traceback (most recent call last):
+  File "<cell>", line 125, in <module>
+    response.raise_for_status()
+requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://signal.conso.gouv.fr/api/reports?limit=100
+```
+
+### Comment consulter les logs
+
+**Option 1 - PowerShell** :
+```powershell
+# Afficher le dernier log de collecte
+Get-Content logs\collecte_*.log -Tail 50
+
+# Afficher les erreurs uniquement
+Get-Content logs\errors_*.log
+
+# Suivre en temps réel (pendant exécution notebook)
+Get-Content logs\collecte_*.log -Wait -Tail 20
+```
+
+**Option 2 - VS Code** :
+- Ouvrir le dossier `logs/`
+- Double-cliquer sur le fichier `.log`
+- Recherche avec `Ctrl+F`
+
+### Logs pour le prof
+
+Les logs permettent de :
+- ✅ Tracer **toutes les opérations** (timestamp précis)
+- ✅ Identifier **quelles sources fonctionnent**
+- ✅ Voir **les erreurs avec traceback complet**
+- ✅ Déboguer **les problèmes d'API keys**
+- ✅ Monitorer **le volume collecté par source**
+
+---## 🔍 Approche Code Inline (Simple & Pédagogique)
 
 **Pourquoi code inline dans le notebook ?**
 
