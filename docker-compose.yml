@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # MinIO - DataLake S3-compatible
+  minio:
+    image: minio/minio:latest
+    container_name: datasens-minio
+    ports:
+      - "9000:9000"      # API
+      - "9001:9001"      # Console Web
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - datasens-network
+
+  # PostgreSQL - SGBD relationnel
+  postgres:
+    image: postgres:15-alpine
+    container_name: datasens-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: datasens
+      POSTGRES_USER: ds_user
+      POSTGRES_PASSWORD: ds_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ds_user -d datasens"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - datasens-network
+
+  # Redis - Cache (optionnel pour E2/E3)
+  redis:
+    image: redis:7-alpine
+    container_name: datasens-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - datasens-network
+
+volumes:
+  minio_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  datasens-network:
+    driver: bridge

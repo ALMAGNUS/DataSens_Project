@@ -1,0 +1,157 @@
+name: 📊 DataSens - Collecte Quotidienne Automatisée
+
+on:
+  schedule:
+    # Exécution quotidienne à 2h du matin UTC (3h Paris hiver, 4h Paris été)
+    - cron: '0 2 * * *'
+  
+  workflow_dispatch:  # Permet l'exécution manuelle depuis l'onglet Actions
+
+jobs:
+  collect-data:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ds_user
+          POSTGRES_PASSWORD: ds_pass
+          POSTGRES_DB: datasens
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      minio:
+        image: minio/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install papermill nbconvert
+      
+      - name: 🗄️ Initialize database schema
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: ds_user
+          POSTGRES_PASSWORD: ds_pass
+          POSTGRES_DB: datasens
+        run: |
+          # Attendre que PostgreSQL soit prêt
+          sleep 5
+          
+          # Créer le schéma (si un script SQL existe)
+          if [ -f "datasens/sql/schema.sql" ]; then
+            PGPASSWORD=ds_pass psql -h localhost -U ds_user -d datasens -f datasens/sql/schema.sql
+          fi
+      
+      - name: 🔄 Run daily collection notebook
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: ds_user
+          POSTGRES_PASSWORD: ds_pass
+          POSTGRES_DB: datasens
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          OWM_API_KEY: ${{ secrets.OWM_API_KEY }}
+        run: |
+          mkdir -p outputs
+          papermill notebooks/collecte_journaliere.ipynb \
+            outputs/collecte_$(date +%Y%m%d_%H%M%S).ipynb \
+            --log-output \
+            --progress-bar
+      
+      - name: 📊 Convert notebook to HTML report
+        if: always()
+        run: |
+          jupyter nbconvert \
+            --to html \
+            --output-dir outputs \
+            outputs/collecte_*.ipynb
+      
+      - name: 💾 Upload collection artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collection-report-${{ github.run_number }}
+          path: |
+            outputs/*.ipynb
+            outputs/*.html
+            datasens/versions/*.sql
+          retention-days: 30
+      
+      - name: 📈 Extract collection stats
+        if: success()
+        run: |
+          # Extraire les statistiques du dernier notebook exécuté
+          python -c "
+          import json
+          import glob
+          
+          notebooks = glob.glob('outputs/collecte_*.ipynb')
+          if notebooks:
+              latest = max(notebooks)
+              with open(latest, 'r', encoding='utf-8') as f:
+                  nb = json.load(f)
+              
+              # Chercher la cellule avec les stats finales
+              for cell in nb['cells']:
+                  if 'outputs' in cell:
+                      for output in cell['outputs']:
+                          if 'text' in output:
+                              text = ''.join(output['text'])
+                              if 'RAPPORT POST-COLLECTE' in text:
+                                  print('📊 STATISTIQUES DE COLLECTE:')
+                                  print(text)
+          "
+      
+      - name: 🚨 Notify on failure
+        if: failure()
+        run: |
+          echo "::error::La collecte quotidienne a échoué!"
+          echo "Vérifiez les artifacts pour les logs détaillés."
+      
+      - name: ✅ Success summary
+        if: success()
+        run: |
+          echo "✅ Collecte quotidienne terminée avec succès"
+          echo "📅 Date: $(date)"
+          echo "🔢 Run #${{ github.run_number }}"
