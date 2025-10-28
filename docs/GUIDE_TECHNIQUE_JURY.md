@@ -26,14 +26,37 @@ On construit un système qui bouffe **toutes les sources de data** possibles, le
 
 ### Stack d'ingestion (ce qu'on peut ingérer)
 
-| Source | Tech | Output |
-|--------|------|--------|
-| **RSS/Atom** | `feedparser` | PostgreSQL |
-| **API REST** | `requests` + `aiohttp` | PostgreSQL |
-| **Web scraping** | `BeautifulSoup4` + `Selenium` | PostgreSQL |
-| **CSV/Excel/JSON** | `pandas` | PostgreSQL |
-| **Bases SQL** | `SQLAlchemy` | PostgreSQL (ETL) |
-| **Big Data** | Fichiers >1GB | MinIO S3 |
+#### 📁 Type 1 : Fichier Plat
+| Source | Tech | Description |
+|--------|------|-------------|
+| **Kaggle CSV** | `pandas` | 50% stocké sur MinIO |
+
+#### 🗄️ Type 2 : Base de Données
+| Source | Tech | Description |
+|--------|------|-------------|
+| **Kaggle PostgreSQL** | `SQLAlchemy` | 30k tweets insérés |
+
+#### 🕸️ Type 3 : Web Scraping (6 sources citoyennes)
+| Source | Tech | Collecteur |
+|--------|------|-----------|
+| **Reddit** | `praw` (API officielle) | `reddit_collector.py` |
+| **YouTube** | `googleapiclient` | `youtube_collector.py` |
+| **SignalConso** | `requests` (API publique) | `signalconso_collector.py` |
+| **Trustpilot** | `BeautifulSoup4` (scraping éthique) | `trustpilot_collector.py` |
+| **Vie Publique** | `feedparser` + `BeautifulSoup4` | `vie_publique_collector.py` |
+| **Data.gouv.fr** | `requests` (API officielle) | `datagouv_collector.py` |
+
+#### 🌐 Type 4 : API (3 sources)
+| Source | Tech | Collecteur |
+|--------|------|-----------|
+| **OpenWeatherMap** | `requests` (API météo) | `openweather_collector.py` |
+| **NewsAPI** | `requests` (API actualités) | `newsapi_collector.py` |
+| **RSS Multi-sources** | `feedparser` (Le Monde, BBC, etc.) | `rss_collector.py` |
+
+#### 📊 Type 5 : Big Data
+| Source | Tech | Description |
+|--------|------|-------------|
+| **GDELT GKG France** | Filtrage 300 MB | MinIO S3 |
 
 ### L'archi complète (le vrai flow)
 
