@@ -1,61 +1,71 @@
 # 🎯 DataSens - Projet E1 : Collecte Multi-Sources & DataLake
 
-[![GitHub release](https://img.shields.io/github/v/release/ALMAGNUS/DataSens_Project)](https://github.com/ALMAGNUS/DataSens_Project/releases)
-[![GitHub stars](https://img.shields.io/github/stars/ALMAGNUS/DataSens_Project)](https://github.com/ALMAGNUS/DataSens_Project/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/ALMAGNUS/DataSens_Project)](https://github.com/ALMAGNUS/DataSens_Project/issues)
-[![Code size](https://img.shields.io/github/languages/code-size/ALMAGNUS/DataSens_Project)](https://github.com/ALMAGNUS/DataSens_Project)
-
-> **Projet académique** - Architecture Big Data avec gouvernance des données
+> **Projet académique E1** - Notebook Jupyter tout-en-un avec code inline simple
 
 ## 📊 Vue d'ensemble
 
-DataSens est une plateforme de collecte, stockage et analyse de données hétérogènes respectant les **5 types de sources exigées** pour le projet, avec traçabilité complète via un modèle Merise et infrastructure Big Data.
+DataSens est un **notebook Jupyter académique** démontrant la collecte de données depuis **5 types de sources différentes**, avec stockage hybride (MinIO + PostgreSQL) et traçabilité complète.
+
+**🎯 Approche pédagogique** : Code simple et transparent dans le notebook, sans modules externes complexes.
 
 ### 🎓 Objectifs pédagogiques - 5 Sources
 1. ✅ **Fichier plat** : Kaggle CSV 50% stocké sur MinIO
-2. ✅ **Base de données** : Kaggle 50% inséré dans PostgreSQL
-3. ✅ **Web Scraping** : 6 sources citoyennes (Reddit, YouTube, SignalConso, Trustpilot, vie-publique.fr, data.gouv.fr)
-4. ✅ **API** : 3 APIs (OpenWeatherMap, NewsAPI, RSS Multi-sources)
+2. ✅ **Base de données** : Kaggle 50% inséré dans PostgreSQL (30k tweets)
+3. ✅ **Web Scraping** : 6 sources citoyennes inline (Reddit, YouTube, SignalConso, Trustpilot, vie-publique.fr, data.gouv.fr)
+4. ✅ **API** : 3 APIs inline (OpenWeatherMap, NewsAPI, RSS Multi-sources)
 5. ✅ **Big Data** : GDELT GKG France (300 MB → filtrage France)
 
-**Compétences démontrées :**
-- Architecture DataLake (MinIO) + SGBD (PostgreSQL)
-- Gouvernance des données (traçabilité, dédoublonnage, RGPD)
-- Orchestration Docker & CI/CD
-- Notebooks reproductibles
-- Respect des règles d'éthique et légalité web scraping
+**✨ Points forts du projet** :
+- **Code inline** : Tout dans le notebook, facile à comprendre et debugger
+- **Architecture DataLake** : MinIO (S3) + PostgreSQL (relationnel)
+- **Gouvernance des données** : Traçabilité complète, dédoublonnage SHA-256, RGPD
+- **Orchestration Docker** : PostgreSQL, MinIO, Redis en containers
+- **Reproductibilité** : `requirements.txt` + `.env` → un seul notebook à exécuter
 
 ---
 
 ## 🏗️ Architecture
 
-```
+┌─────────────────────────────────────────────────────────────┐
+│                  NOTEBOOK JUPYTER E1                         │
+│              (Code inline simple et pédagogique)             │
+├─────────────────────────────────────────────────────────────┤
+│  Cellule 1-10   : Setup (imports, MinIO, PostgreSQL)       │
+│  Cellule 11-17  : Kaggle (CSV → 50% MinIO + 50% PG)        │
+│  Cellule 18-24  : PostgreSQL Kaggle (insertion 30k tweets) │
+│  Cellule 25     : Web Scraping (9 sources inline)          │
+│  Cellule 26     : APIs (NewsAPI, OpenWeather, RSS inline)  │
+│  Cellule 27     : GDELT Big Data (filtrage France)         │
+│  Cellule 28+    : Analyse & Visualisations                 │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              5 TYPES DE SOURCES (Exigence Projet)            │
 ├─────────────────────────────────────────────────────────────┤
 │  1. FICHIER PLAT     → Kaggle 50% CSV (MinIO)              │
 │  2. BASE DE DONNÉES  → Kaggle 50% PostgreSQL (30k tweets)   │
-│  3. WEB SCRAPING     → 6 sources citoyennes légales         │
-│  4. API              → 3 APIs (OWM, NewsAPI, RSS)           │
-│  5. BIG DATA         → GDELT France (GKG filtré)            │
+│  3. WEB SCRAPING     → 6 sources inline (Reddit, YouTube...)│
+│  4. API              → 3 sources inline (OWM, NewsAPI, RSS) │
+│  5. BIG DATA         → GDELT France (GKG filtré inline)     │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                  COUCHE INGESTION (E1)                       │
+│                  COLLECTE INLINE (Code simple)               │
 ├─────────────────────────────────────────────────────────────┤
-│  • Collecte automatisée                                      │
-│  • Dédoublonnage (hash fingerprint)                         │
-│  • Validation qualité                                        │
-│  • Manifest de traçabilité                                   │
+│  • Code direct dans notebook (pas de .py externes)          │
+│  • Try/except par source (robustesse)                       │
+│  • Logs détaillés (debugging facile)                        │
+│  • Dédoublonnage SHA-256                                    │
+│  • Format unifié {titre, texte, source, url, date, langue}  │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌────────────────────┬────────────────────────────────────────┐
 │   DataLake (MinIO) │   SGBD PostgreSQL (Merise)            │
 ├────────────────────┼────────────────────────────────────────┤
 │ • Bruts 50% Kaggle │ • 18 tables relationnelles             │
-│ • Tous les flux    │ • Type_donnee → Source → Flux → Doc   │
-│ • Fichiers CSV/JSON│ • Territoire, Météo, Indicateurs      │
-│ • Versioning       │ • Thèmes, Événements, Annotations     │
+│ • Tous les CSV flux│ • Type_donnee → Source → Flux → Doc   │
+│ • Versioning       │ • Territoire, Météo, Indicateurs       │
+│ • S3-compatible    │ • Traçabilité complète                 │
 └────────────────────┴────────────────────────────────────────┘
 ```
 
@@ -99,7 +109,7 @@ NEWSAPI_KEY=ta_cle_newsapi
 OWM_API_KEY=ta_cle_openweather
 ```
 
-**Note** : Les collecteurs fonctionnent sans clés API (mode démo avec données factices)
+**💡 Astuce** : Les API keys sont optionnelles. Le notebook gère gracieusement les erreurs (try/except) et continue avec les autres sources si une clé manque.
 
 ### 3️⃣ Lancer l'infrastructure
 ```bash
@@ -128,62 +138,95 @@ cd notebooks
 jupyter notebook datasens_E1_v2.ipynb
 ```
 
-Exécuter les cellules dans l'ordre (1-27)
+**🎯 Mode d'emploi** : Exécuter les cellules dans l'ordre (1-61). Chaque cellule est commentée et autonome.
+
+**⚡ Cellules clés** :
+- **Cellule 25** : Web Scraping 6 sources (code inline simple)
+- **Cellule 26** : APIs 3 sources (code inline simple)
+- **Cellule 27** : GDELT Big Data France
 
 ---
 
-## 🤖 Collecteurs de données (9 implémentés)
+## 🔍 Approche Code Inline (Simple & Pédagogique)
 
-Tous les collecteurs sont dans `datasens/collectors/` et peuvent être utilisés indépendamment :
+**Pourquoi code inline dans le notebook ?**
 
+✅ **Simplicité** : Pas de modules `.py` externes → tout visible dans un seul fichier
+✅ **Pédagogique** : Le jury voit chaque ligne de code, pas de "boîte noire"
+✅ **Debugging facile** : Logs détaillés directement dans les cellules
+✅ **Reproductibilité** : `requirements.txt` + 1 notebook = tout fonctionne
+✅ **Académique** : Approche claire pour démonstration E1
+
+**Exemple cellule 25 (Web Scraping)** :
 ```python
-# Exemple : Collecter depuis Reddit
-from datasens.collectors.reddit_collector import RedditCollector
+# Tout le code dans la cellule - pas d'import externe
+import praw
+reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"), ...)
+for post in reddit.subreddit("france").hot(limit=50):
+    all_data.append({"titre": post.title, "texte": post.selftext, ...})
 
-collector = RedditCollector()
-posts = collector.collect(subreddits=["france"], limit=50)
-print(f"✅ {len(posts)} posts collectés")
+# YouTube
+from googleapiclient.discovery import build
+youtube = build('youtube', 'v3', developerKey=os.getenv("YOUTUBE_API_KEY"))
+response = youtube.search().list(q="france", maxResults=30).execute()
+for video in response['items']:
+    all_data.append({"titre": video['snippet']['title'], ...})
+
+# ... 4 autres sources (SignalConso, Trustpilot, ViePublique, DataGouv)
 ```
 
-### Web Scraping (6 sources)
+---
 
-1. **`reddit_collector.py`** - Posts Reddit (API PRAW)
-   - Subreddits : r/france, r/Paris, r/Lyon
-   - Données : titre, texte, score, commentaires
+## ⚙️ Stack Technique
 
-2. **`youtube_collector.py`** - Vidéos YouTube (Google API)
-   - Chaînes officielles françaises
-   - Données : titre, description, date publication
+### Infrastructure & DevOps
+- **Docker** : Conteneurisation PostgreSQL, MinIO, Redis
+- **Docker Compose** : Orchestration multi-conteneurs
+- **Git** : Versioning (commits français, tags sémantiques)
+- **GitHub** : Hébergement code source
+- **.env** : Gestion secrets (API keys sécurisées)
 
-3. **`signalconso_collector.py`** - Signalements citoyens (API)
-   - Source : signal.conso.gouv.fr
-   - Données : catégorie, entreprise, statut
+### Base de Données & Storage
+- **PostgreSQL 17** : SGBD relationnel (18 tables Merise E1)
+- **MinIO** : Object Storage S3-compatible (DataLake)
+- **SQLAlchemy 2.0** : ORM Python ↔ PostgreSQL
+- **psycopg2** : Driver PostgreSQL natif
 
-4. **`trustpilot_collector.py`** - Avis consommateurs (scraping éthique)
-   - Entreprises : SNCF, EDF, Orange
-   - Données : note, titre, texte avis
+### Data Processing
+- **Python 3.13** : Langage principal
+- **Pandas 2.3** : Manipulation DataFrames
+- **Jupyter Notebook** : Développement interactif
+- **NumPy 2.3** : Calculs numériques
 
-5. **`vie_publique_collector.py`** - Actualités gouvernementales (RSS)
-   - Source : vie-publique.fr
-   - Données : titre, contenu, catégorie
+### Data Collection (inline dans notebook)
+- **PRAW 7.8** : Reddit API officielle
+- **google-api-python-client 2.185** : YouTube Data API v3
+- **requests 2.32** : HTTP client (SignalConso, Data.gouv, NewsAPI, OpenWeather)
+- **BeautifulSoup4 4.14** : Web scraping (Trustpilot)
+- **feedparser 6.0** : Parsing RSS/Atom (Vie Publique, multi-sources)
 
-6. **`datagouv_collector.py`** - Métadonnées datasets (API)
-   - Source : data.gouv.fr
-   - Données : titre, description, organisation
+### Data Quality & Security
+- **hashlib** : SHA-256 fingerprints (dédoublonnage)
+- **python-dotenv** : Chargement variables d'environnement
+- **regex** : Validation et nettoyage données
+- **datetime** : Gestion timestamps UTC
 
-### API (3 sources)
+### Data Visualization
+- **matplotlib 3.10** : Graphiques de base
+- **seaborn 0.13** : Graphiques statistiques stylés
 
-7. **`openweather_collector.py`** - Données météo (API)
-   - Villes : Paris, Lyon, Marseille, Toulouse, Nice
-   - Données : température, humidité, vent
+### APIs & Web Services
+- **Kaggle API** : Téléchargement datasets officiels
+- **OpenWeatherMap API** : Données météo temps réel
+- **NewsAPI** : Actualités internationales
+- **Reddit API (PRAW)** : Posts subreddits français
+- **YouTube Data API v3** : Métadonnées vidéos
+- **Signal.conso.gouv.fr API** : Signalements citoyens
+- **data.gouv.fr API** : Open Data gouvernemental
 
-8. **`newsapi_collector.py`** - Actualités internationales (API)
-   - Sources : multiples
-   - Données : titre, description, source, date
-
-9. **`rss_collector.py`** - Flux RSS multi-sources (Feedparser)
-   - Sources : Le Monde, BBC, France24, RFI, Franceinfo, 20 Minutes
-   - Données : titre, résumé, lien, date
+### Big Data
+- **GDELT Project** : Événements mondiaux (GKG 300 MB → 5-10 MB filtré France)
+- **Filtrage** : V2Locations, V2Themes, V2Tone
 
 ---
 
@@ -191,27 +234,20 @@ print(f"✅ {len(posts)} posts collectés")
 
 ```
 datasens-project/
-├── � notebooks/                    # Notebooks Jupyter
+├── 📓 notebooks/                    # Notebooks Jupyter
 │   ├── datasens_E1_v2.ipynb         # Version production (MinIO+PG)
-│   └── datasens_E1_v1.ipynb         # Version démo (SQLite)
+│   └── datasens_E1_v3.ipynb         # Archive ancienne version
 │
 ├── 🐳 docker-compose.yml            # Infrastructure Docker
 ├── 📋 requirements.txt              # Dépendances Python
 ├── 🔐 .env                          # Configuration (secrets)
-├── � .env.example                  # Template configuration
+├── 📄 .env.example                  # Template configuration
 ├── 🚫 .gitignore                    # Exclusions Git
 │
 ├── 📂 data/                         # Données collectées
 │   ├── raw/                         # Bruts (Kaggle, RSS, GDELT...)
 │   │   ├── kaggle/                  # 60k tweets
-│   │   ├── reddit/                  # Posts r/france
-│   │   ├── youtube/                 # Vidéos chaînes FR
-│   │   ├── signalconso/             # Signalements citoyens
-│   │   ├── trustpilot/              # Avis consommateurs
-│   │   ├── viepublique/             # Actualités gouv
-│   │   ├── datagouv/                # Métadonnées datasets
-│   │   ├── openweather/             # Données météo
-│   │   ├── newsapi/                 # Articles actualités
+│   │   ├── scraping/                # Multi-sources (Reddit, YouTube, etc.)
 │   │   ├── rss/                     # Flux RSS multi-sources
 │   │   ├── gdelt/                   # Big Data GKG France
 │   │   └── manifests/               # Traçabilité
@@ -219,20 +255,13 @@ datasens-project/
 │   └── gold/                        # Agrégés (E2)
 │
 ├── 📂 datasens/                     # Code source
-│   ├── collectors/                  # 🆕 9 collecteurs implémentés
-│   │   ├── reddit_collector.py      # Reddit API (PRAW)
-│   │   ├── youtube_collector.py     # YouTube Data API v3
-│   │   ├── signalconso_collector.py # SignalConso API
-│   │   ├── trustpilot_collector.py  # Trustpilot scraping
-│   │   ├── vie_publique_collector.py# Vie Publique RSS+scraping
-│   │   ├── datagouv_collector.py    # Data.gouv.fr API
-│   │   ├── openweather_collector.py # OpenWeatherMap API
-│   │   ├── newsapi_collector.py     # NewsAPI
-│   │   └── rss_collector.py         # RSS multi-sources
 │   ├── transformers/                # Nettoyage & enrichissement
 │   ├── loaders/                     # PostgreSQL & MinIO
 │   ├── utils/                       # Helpers
 │   └── versions/                    # Snapshots PostgreSQL
+│
+├── 📂 docs/                         # Documentation
+│   └── GUIDE_TECHNIQUE_JURY.md      # Guide détaillé pour le jury
 │
 ├── 📂 logs/                         # Logs de collecte
 └── 📂 .github/workflows/            # CI/CD GitHub Actions

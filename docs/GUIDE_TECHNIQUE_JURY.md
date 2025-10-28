@@ -1,28 +1,73 @@
-# 🚀 Guide Technique DataSens - Démonstration Jury
+# 🚀 Guide Technique DataSens E1 - Notebook Académique
 
-> **Pour les débutants** : Ce guide décrypte tout le code du notebook en langage clair, style Station F. On va droit au but ! 💪
+> **Approche pédagogique** : Code inline simple et transparent dans un seul notebook Jupyter. Pas de modules `.py` externes → tout visible pour le jury ! 💪
 
 ---
 
 ## 📦 Table des Matières
 
 1. [Vue d'ensemble du projet](#vue-densemble)
-2. [Dépendances expliquées](#dépendances)
-3. [Architecture du code](#architecture)
-4. [Chaque étape détaillée](#étapes-détaillées)
-5. [Variables clés du pipeline](#variables-clés)
+2. [Approche code inline](#approche-code-inline)
+3. [Dépendances expliquées](#dépendances)
+4. [Architecture du notebook](#architecture)
+5. [Chaque cellule détaillée](#cellules-détaillées)
 6. [Troubleshooting](#troubleshooting)
-7. [📦 DÉPLOIEMENT & PARTAGE - Certification](#déploiement--partage---certification)
 
 ---
 
 ## 🎯 Le projet en vrai
 
-### DataSens : Agrégateur de data multi-sources
+### DataSens E1 : Notebook académique de collecte multi-sources
 
-On construit un système qui bouffe **toutes les sources de data** possibles, les normalise, les clean, les annote avec de l'IA, et les balance dans PostgreSQL + un datalake MinIO.
+**Un seul notebook Jupyter** qui collecte des données depuis **5 types de sources différentes** (exigence projet E1), les stocke dans PostgreSQL + MinIO, et démontre la traçabilité complète.
 
-**Le but** : Créer des datasets annotés prêts à l'emploi pour du ML, de la veille, du BI... bref, de la vraie data exploitable.
+**🎓 Approche académique** :
+- ✅ Code **simple et lisible** dans les cellules
+- ✅ **Pas de .py externes** → tout visible dans le notebook
+- ✅ **Try/except** par source → robustesse et logs détaillés
+- ✅ **Format unifié** → toutes les sources → même structure DataFrame
+
+**Le but** : Démontrer au jury qu'on maîtrise la collecte multi-sources avec du code propre et compréhensible.
+
+---
+
+## 💡 Approche Code Inline
+
+**Pourquoi on a tout mis dans le notebook ?**
+
+1. **Transparence** : Le jury voit **tout le code** ligne par ligne
+2. **Simplicité** : Pas de `import datasens.collectors.xxx` → code direct
+3. **Debugging** : Logs affichés directement dans les cellules
+4. **Académique** : Montre qu'on code from scratch, pas copy/paste de libs
+5. **Reproductible** : 1 fichier `.ipynb` + `requirements.txt` = ça tourne
+
+**Exemple concret** :
+
+❌ **Avant (avec modules .py)** :
+```python
+from datasens.collectors.reddit_collector import RedditCollector
+collector = RedditCollector()
+data = collector.collect(limit=50)  # Qu'est-ce qui se passe dedans ? 🤔
+```
+
+✅ **Maintenant (code inline)** :
+```python
+# Tout le code visible dans la cellule
+import praw
+reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"), ...)
+for post in reddit.subreddit("france").hot(limit=50):
+    all_data.append({
+        "titre": post.title,
+        "texte": post.selftext or post.title,
+        "source_site": "reddit.com",
+        ...
+    })
+print(f"✅ Reddit: {len(all_data)} posts")  # Log direct
+```
+
+→ **Résultat** : Le jury voit exactement ce qu'on fait, pas de boîte noire !
+
+---
 
 ### Stack d'ingestion (ce qu'on peut ingérer)
 
@@ -37,21 +82,21 @@ On construit un système qui bouffe **toutes les sources de data** possibles, le
 | **Kaggle PostgreSQL** | `SQLAlchemy` | 30k tweets insérés |
 
 #### 🕸️ Type 3 : Web Scraping (6 sources citoyennes)
-| Source | Tech | Collecteur |
-|--------|------|-----------|
-| **Reddit** | `praw` (API officielle) | `reddit_collector.py` |
-| **YouTube** | `googleapiclient` | `youtube_collector.py` |
-| **SignalConso** | `requests` (API publique) | `signalconso_collector.py` |
-| **Trustpilot** | `BeautifulSoup4` (scraping éthique) | `trustpilot_collector.py` |
-| **Vie Publique** | `feedparser` + `BeautifulSoup4` | `vie_publique_collector.py` |
-| **Data.gouv.fr** | `requests` (API officielle) | `datagouv_collector.py` |
+| Source | Tech | Implémentation |
+|--------|------|----------------|
+| **Reddit** | `praw` (API officielle) | Inline notebook cellule 25 |
+| **YouTube** | `googleapiclient` | Inline notebook cellule 25 |
+| **SignalConso** | `requests` (API publique) | Inline notebook cellule 25 |
+| **Trustpilot** | `BeautifulSoup4` (scraping éthique) | Inline notebook cellule 25 |
+| **Vie Publique** | `feedparser` + `BeautifulSoup4` | Inline notebook cellule 25 |
+| **Data.gouv.fr** | `requests` (API officielle) | Inline notebook cellule 25 |
 
 #### 🌐 Type 4 : API (3 sources)
-| Source | Tech | Collecteur |
-|--------|------|-----------|
-| **OpenWeatherMap** | `requests` (API météo) | `openweather_collector.py` |
-| **NewsAPI** | `requests` (API actualités) | `newsapi_collector.py` |
-| **RSS Multi-sources** | `feedparser` (Le Monde, BBC, etc.) | `rss_collector.py` |
+| Source | Tech | Implémentation |
+|--------|------|----------------|
+| **OpenWeatherMap** | `requests` (API météo) | Inline notebook cellule 26 |
+| **NewsAPI** | `requests` (API actualités) | Inline notebook cellule 26 |
+| **RSS Multi-sources** | `feedparser` (Le Monde, BBC, etc.) | Inline notebook cellule 26 |
 
 #### 📊 Type 5 : Big Data
 | Source | Tech | Description |
@@ -147,6 +192,92 @@ import seaborn as sns
 # PostgreSQL (pour la data structurée)
 ```
 
+### Implémentation concrète dans le notebook
+
+**📍 Étape 11 du notebook : Web Scraping Multi-Sources**
+
+Le code de collecte est intégré directement dans la cellule 25 (lignes 925-1140) :
+
+```python
+# CODE INLINE - Pas de collecteurs externes
+all_scraping_data = []
+
+# Reddit (PRAW API)
+import praw
+reddit = praw.Reddit(
+    client_id=os.getenv("REDDIT_CLIENT_ID"),
+    client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+    user_agent="DataSens/1.0"
+)
+for subreddit_name in ["france", "Paris"]:
+    subreddit = reddit.subreddit(subreddit_name)
+    for post in subreddit.hot(limit=50):
+        all_scraping_data.append({
+            "titre": post.title,
+            "texte": post.selftext or post.title,
+            "source_site": "reddit.com",
+            "url": f"https://reddit.com{post.permalink}",
+            "date_publication": dt.datetime.fromtimestamp(post.created_utc),
+            "langue": "fr"
+        })
+
+# YouTube (Google API)
+from googleapiclient.discovery import build
+youtube = build('youtube', 'v3', developerKey=os.getenv("YOUTUBE_API_KEY"))
+request = youtube.search().list(
+    part="snippet", q="france actualités", type="video",
+    maxResults=30, regionCode="FR", relevanceLanguage="fr"
+)
+response = request.execute()
+for item in response.get('items', []):
+    snippet = item['snippet']
+    all_scraping_data.append({
+        "titre": snippet['title'],
+        "texte": snippet['description'] or snippet['title'],
+        "source_site": "youtube.com",
+        "url": f"https://www.youtube.com/watch?v={item['id']['videoId']}",
+        "date_publication": dt.datetime.fromisoformat(snippet['publishedAt'].replace('Z', '+00:00')),
+        "langue": "fr"
+    })
+
+# ... (SignalConso, Trustpilot, ViePublique, DataGouv similaire)
+
+# Consolidation
+df_scraping = pd.DataFrame(all_scraping_data)
+df_scraping["hash_fingerprint"] = df_scraping["texte"].apply(lambda t: sha256(t[:500]))
+df_scraping = df_scraping.drop_duplicates(subset=["hash_fingerprint"])
+
+# Storage MinIO + PostgreSQL
+flux_id = create_flux("Web Scraping Multi-Sources", "html", manifest_uri=minio_uri)
+insert_documents(df_scraping[["titre", "texte", "langue", "date_publication", "hash_fingerprint"]], flux_id)
+```
+
+**🔑 Points clés pour le jury** :
+
+1. **Code inline simple** : Tout le code dans le notebook, pas de dépendances externes
+2. **9 sources en 1 cellule** : Reddit, YouTube, SignalConso, Trustpilot, ViePublique, DataGouv + 3 APIs
+3. **Gestion d'erreurs** : Try/except par source → 1 source qui fail ≠ pipeline qui crash
+4. **Format normalisé** : Peu importe la source, on obtient toujours `{titre, texte, source_site, url, date_publication, langue}`
+5. **Fallback gracieux** : Si API keys manquent, le notebook continue avec les autres sources
+6. **Traçabilité** : Logs détaillés par source + compteur documents collectés
+6. **Traçabilité** : Chaque collecteur log ses actions + nombre de docs récupérés
+
+**📊 Consolidation finale** :
+```python
+df_scraping = pd.DataFrame(all_scraping_data)
+# → Dédoublonnage par hash SHA256
+# → Nettoyage (texte > 20 chars)
+# → Storage MinIO + PostgreSQL
+# → Statistiques par source
+```
+
+**🎯 Valeur ajoutée pour E1** :
+- ✅ Démontre maîtrise **API REST** (Reddit PRAW, YouTube, SignalConso, NewsAPI, OpenWeather, Data.gouv)
+- ✅ Démontre **web scraping éthique** (Trustpilot avec rate limiting, Vie Publique RSS)
+- ✅ Démontre **gestion multi-sources hétérogènes** (9 formats différents → 1 DataFrame unifié)
+- ✅ Démontre **code production-ready** (retry logic, logging, error handling inline)
+- ✅ Démontre **notebook autonome** (pas de dépendances externes, tout inline)
+
 ### Ce qu'on prouve au jury
 
 ✅ On sait coder un ETL from scratch (pas besoin d'Airflow pour une démo)
@@ -156,6 +287,7 @@ import seaborn as sns
 ✅ On fait de l'IA basique (annotation auto)
 ✅ On visualise les métriques (matplotlib/seaborn)
 ✅ Le code est clean, commenté, reproductible
+✅ **[NOUVEAU]** Code inline dans notebook (9 sources, gestion erreurs robuste)
 
 **En gros** : DataSens = plateforme d'agrégation multi-sources pour créer des datasets annotés. Ce notebook démontre qu'on sait coder un pipeline ETL + CRUD propre, sans over-engineering.
 
